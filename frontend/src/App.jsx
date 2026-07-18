@@ -942,7 +942,7 @@ export default function App() {
         </nav>
 
         {/* Chat History Section */}
-        <div className="flex flex-col gap-2 mb-auto overflow-y-auto max-h-40 scrollbar-thin">
+        <div className="flex flex-col gap-2 overflow-y-auto max-h-40 scrollbar-thin mb-3">
           <div className="text-[10px] uppercase tracking-wider text-[#94A3B8]/50 font-bold mb-1 px-3">
             Recent Cases
           </div>
@@ -956,6 +956,31 @@ export default function App() {
               <div className="truncate flex-grow">{session.title}</div>
             </button>
           ))}
+        </div>
+
+        {/* Hackathon Demo Panel */}
+        <div className="flex flex-col gap-2 p-3 bg-white/4 border border-white/8 rounded-xl text-xs text-[#CBD5E1] mb-3 shrink-0 font-sans">
+          <div className="text-[10px] uppercase tracking-wider text-[#06B6D4] font-bold">
+            🏆 Hackathon Demo Panel
+          </div>
+          <div className="text-[11px] leading-relaxed text-[#94A3B8]">
+            Copy any demo tracking number below to test tracking or chat:
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {['CP345678', 'CP123456', 'CP234567'].map((num) => (
+              <button
+                key={num}
+                onClick={() => {
+                  navigator.clipboard.writeText(num);
+                  alert(`Copied tracking number: ${num}`);
+                }}
+                className="px-2 py-1 bg-white/5 hover:bg-[#06B6D4]/20 border border-white/10 hover:border-[#06B6D4]/40 rounded text-[10px] font-bold text-white transition-all cursor-pointer"
+                title="Click to copy"
+              >
+                📋 {num}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Live Status Connection */}
