@@ -11,22 +11,44 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 import os
 
 import google.auth
 from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
+from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import logging as google_cloud_logging
 
 from app.app_utils.telemetry import setup_telemetry
 from app.app_utils.typing import Feedback
 
 setup_telemetry()
-_, project_id = google.auth.default()
-logging_client = google_cloud_logging.Client()
-logger = logging_client.logger(__name__)
+
+
+def _has_google_credentials() -> bool:
+    """Return whether ADC credentials are available for cloud integrations."""
+    try:
+        google.auth.default()
+        return True
+    except DefaultCredentialsError:
+        return False
+
+
+use_cloud_telemetry = _has_google_credentials()
+
+logger = logging.getLogger(__name__)
+try:
+    logging_client = google_cloud_logging.Client()
+    logger = logging_client.logger(__name__)
+except Exception:
+    logger = logging.getLogger(__name__)
+
+_allow_origins_env = os.getenv("ALLOW_ORIGINS", "")
 allow_origins = (
-    os.getenv("ALLOW_ORIGINS", "").split(",") if os.getenv("ALLOW_ORIGINS") else None
+    [o.strip() for o in _allow_origins_env.split(",") if o.strip()]
+    if _allow_origins_env.strip()
+    else ["*"]  # Default: allow all origins (safe for hackathon/demo deployments)
 )
 
 # Artifact bucket for ADK (created by Terraform, passed via env var)
@@ -44,10 +66,10 @@ app: FastAPI = get_fast_api_app(
     artifact_service_uri=artifact_service_uri,
     allow_origins=allow_origins,
     session_service_uri=session_service_uri,
-    otel_to_cloud=True,
+    otel_to_cloud=use_cloud_telemetry,
 )
-app.title = "customer-support-agent"
-app.description = "API for interacting with the Agent customer-support-agent"
+app.title = "CarePilot AI"
+app.description = "API for interacting with the CarePilot AI Customer Care Agent"
 
 
 @app.post("/feedback")
@@ -60,7 +82,12 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
     Returns:
         Success message
     """
-    logger.log_struct(feedback.model_dump(), severity="INFO")
+    payload = feedback.model_dump()
+    log_struct = getattr(logger, "log_struct", None)
+    if log_struct is not None:
+        log_struct(payload, severity="INFO")
+    else:
+        logger.info("Feedback received: %s", payload)
     return {"status": "success"}
 
 

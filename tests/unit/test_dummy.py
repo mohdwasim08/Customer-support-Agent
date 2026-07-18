@@ -17,7 +17,25 @@ This is where you test your business logic, including agent functionality,
 data processing, and other core components of your application.
 """
 
+import importlib
+from unittest.mock import patch
+
+from google.auth.exceptions import DefaultCredentialsError
+
 
 def test_dummy() -> None:
     """Placeholder - replace with real tests."""
     assert 1 == 1
+
+
+def test_import_fast_api_app_without_adc() -> None:
+    """The app should still import when ADC credentials are unavailable."""
+    with patch(
+        "google.auth.default",
+        side_effect=DefaultCredentialsError("No credentials found"),
+    ):
+        with patch(
+            "google.cloud.logging.Client", side_effect=Exception("skip logging")
+        ):
+            module = importlib.import_module("app.fast_api_app")
+            assert hasattr(module, "app")

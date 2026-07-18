@@ -1,86 +1,233 @@
-# customer-support-agent
+# CarePilot AI 🤖
 
-Simple ReAct agent
-Agent generated with `agents-cli` version `0.5.0`
+**AI-powered Customer Support Agent** built with Google ADK, FastAPI, and React/Vite.
 
-## Project Structure
-
-```
-customer-support-agent/
-├── app/         # Core agent code
-│   ├── agent.py               # Main agent logic
-│   └── app_utils/             # App utilities and helpers
-├── tests/                     # Unit, integration, and load tests
-├── GEMINI.md                  # AI-assisted development guide
-└── pyproject.toml             # Project dependencies
-```
-
-> 💡 **Tip:** Use [Gemini CLI](https://github.com/google-gemini/gemini-cli) for AI-assisted development - project context is pre-configured in `GEMINI.md`.
-
-## Requirements
-
-Before you begin, ensure you have:
-- **uv**: Python package manager (used for all dependency management in this project) - [Install](https://docs.astral.sh/uv/getting-started/installation/) ([add packages](https://docs.astral.sh/uv/concepts/dependencies/) with `uv add <package>`)
-- **agents-cli**: Agents CLI - Install with `uv tool install google-agents-cli`
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
-
-
-## Quick Start
-
-Install `agents-cli` and its skills if not already installed:
-
-```bash
-uvx google-agents-cli setup
-```
-
-Install required packages:
-
-```bash
-agents-cli install
-```
-
-Test the agent with a local web server:
-
-```bash
-agents-cli playground
-```
-
-You can also use features from the [ADK](https://adk.dev/) CLI with `uv run adk`.
-
-## Commands
-
-| Command              | Description                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `agents-cli install` | Install dependencies using uv                                                         |
-| `agents-cli playground` | Launch local development environment                                                  |
-| `agents-cli lint`    | Run code quality checks                                                               |
-| `agents-cli eval`    | Evaluate agent behavior (generate, grade, analyze, and more — see `agents-cli eval --help`) |
-| `uv run pytest tests/unit tests/integration` | Run unit and integration tests                                                        |
-
-## 🛠️ Project Management
-
-| Command | What It Does |
-|---------|--------------|
-| `agents-cli scaffold enhance` | Add CI/CD pipelines and Terraform infrastructure |
-| `agents-cli infra cicd` | One-command setup of entire CI/CD pipeline + infrastructure |
-| `agents-cli scaffold upgrade` | Auto-upgrade to latest version while preserving customizations |
+> Hackathon submission by **Mohammad Wasim** — Founder & AI Developer  
+> 📧 mohdwasim.tech@gmail.com
 
 ---
 
-## Development
+## ✨ Features
 
-Edit your agent logic in `app/agent.py` and test with `agents-cli playground` - it auto-reloads on save.
+- 💬 **Live AI Chat** — Powered by Google Gemini via ADK
+- 📦 **Order Tracking** — Real-time order status lookup
+- 🔄 **Returns & Refunds** — Guided return process
+- ❓ **FAQ** — Instant answers to common questions
+- 🎭 **Demo Mode** — Works without backend for showcasing
 
-## Deployment
+---
 
-```bash
-gcloud config set project <your-project-id>
-agents-cli deploy
+## 🏗️ Architecture
+
+```
+┌─────────────────────┐        ┌──────────────────────────────┐
+│   React / Vite      │  HTTP  │  FastAPI + Google ADK        │
+│   Frontend          │───────▶│  Backend                     │
+│   (Vercel)          │        │  (Railway / Cloud Run)       │
+└─────────────────────┘        └──────────────────────────────┘
 ```
 
-To add CI/CD and Terraform, run `agents-cli scaffold enhance`.
-To set up your production infrastructure, run `agents-cli infra cicd`.
+| Layer | Tech | Deployment |
+|---|---|---|
+| Frontend | React 19 + Vite 8 + Tailwind CSS | Vercel |
+| Backend | FastAPI + Google ADK + Uvicorn | Railway |
+| AI Model | Google Gemini (via AI Studio API) | — |
 
-## Observability
+---
 
-Built-in telemetry exports to Cloud Trace, BigQuery, and Cloud Logging.
+## 🚀 Quick Start (Local Development)
+
+### Prerequisites
+- Node.js 18+
+- Python 3.11+
+- `uv` package manager (`pip install uv`)
+- Google AI Studio API key → [aistudio.google.com](https://aistudio.google.com)
+
+### 1. Clone & Setup
+
+```bash
+git clone <your-repo-url>
+cd customer-support-agent
+```
+
+### 2. Configure Backend Environment
+
+```bash
+cp .env.example .env
+# Edit .env and set your GOOGLE_API_KEY
+```
+
+### 3. Install Backend Dependencies
+
+```bash
+uv sync
+```
+
+### 4. Start Backend
+
+```bash
+agents-cli playground --host 0.0.0.0
+# Runs on http://localhost:8080
+```
+
+### 5. Install & Start Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+# Runs on http://localhost:5173
+```
+
+### 6. Open App
+
+Visit **http://localhost:5173** in your browser.
+
+---
+
+## 🌍 Production Deployment
+
+### Step 1 — Deploy Backend to Railway
+
+1. **Create a Railway account** → [railway.app](https://railway.app)
+
+2. **Create a new project** → "Deploy from GitHub repo"
+
+3. **Select your repository** (root directory, not `frontend/`)
+
+4. **Set environment variables** in Railway dashboard:
+   ```
+   GOOGLE_API_KEY=your_google_api_key_here
+   GOOGLE_GENAI_USE_VERTEXAI=False
+   ALLOW_ORIGINS=https://your-app.vercel.app
+   PORT=8080
+   ```
+
+5. **Railway auto-detects** `railway.json` and builds with `Dockerfile`
+
+6. **Copy your Railway URL** → e.g. `https://carepilot-api.railway.app`
+
+---
+
+### Step 2 — Deploy Frontend to Vercel
+
+1. **Create a Vercel account** → [vercel.com](https://vercel.com)
+
+2. **Import your GitHub repository**
+
+3. **Configure project settings**:
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Framework Preset**: Vite
+
+4. **Set environment variables** in Vercel dashboard:
+   ```
+   VITE_API_URL=https://carepilot-api.railway.app
+   ```
+
+5. **Deploy** → Vercel builds and gives you a URL like `https://carepilot-ai.vercel.app`
+
+6. **Update ALLOW_ORIGINS** in Railway to match your Vercel URL
+
+---
+
+### Step 3 — Verify Deployment
+
+After both deployments are live:
+
+```bash
+# Test backend health
+curl https://carepilot-api.railway.app/health
+
+# Test backend API list
+curl https://carepilot-api.railway.app/list-apps
+
+# Open frontend
+open https://carepilot-ai.vercel.app
+```
+
+---
+
+## 🔧 Environment Variables Reference
+
+### Backend (`.env` / Railway)
+
+| Variable | Required | Description |
+|---|---|---|
+| `GOOGLE_API_KEY` | ✅ Yes | Google AI Studio API key |
+| `GOOGLE_GENAI_USE_VERTEXAI` | ✅ Yes | Set to `False` for AI Studio |
+| `ALLOW_ORIGINS` | ⚠️ Recommended | Comma-separated frontend URLs |
+| `PORT` | Auto | Server port (Railway injects automatically) |
+| `LOGS_BUCKET_NAME` | No | GCS bucket for logs (optional) |
+
+### Frontend (`.env.production` / Vercel)
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_URL` | ✅ Yes (production) | Backend deployment URL |
+
+---
+
+## 📱 Device Compatibility
+
+| Platform | Status |
+|---|---|
+| Windows (Chrome, Firefox, Edge) | ✅ Supported |
+| macOS (Safari, Chrome) | ✅ Supported |
+| Android (Chrome) | ✅ Supported |
+| iPhone / iPad (Safari) | ✅ Supported |
+| Linux (any browser) | ✅ Supported |
+
+---
+
+## 🛠️ Local Tunnel for Testing (any device on same network)
+
+```bash
+# Start backend
+agents-cli playground --host 0.0.0.0
+
+# Start frontend
+cd frontend && npm run dev
+
+# Start public tunnel (access from phone/tablet)
+ssh -R 80:localhost:5173 nokey@localhost.run
+# Opens a public HTTPS URL like https://abc123.lhr.life
+```
+
+---
+
+## 📁 Project Structure
+
+```
+customer-support-agent/
+├── app/                        # Python backend (FastAPI + ADK)
+│   ├── agent.py                # Main AI agent logic (DO NOT MODIFY)
+│   ├── fast_api_app.py         # FastAPI app & CORS config
+│   ├── agent_runtime_app.py    # Agent Runtime deployment
+│   └── app_utils/              # Utilities (telemetry, typing)
+├── frontend/                   # React/Vite frontend
+│   ├── src/
+│   │   └── App.jsx             # Main app component
+│   ├── public/
+│   │   └── avatar-circle.jpg   # CarePilot AI avatar
+│   ├── vite.config.js          # Vite config (host + proxy + build)
+│   └── vercel.json             # Vercel SPA routing config
+├── Dockerfile                  # Backend container (Railway/Cloud Run)
+├── railway.json                # Railway deployment config
+├── pyproject.toml              # Python project metadata
+├── .env.example                # Backend environment variables template
+└── README.md                   # This file
+```
+
+---
+
+## 🧑‍💻 Developer
+
+**Mohammad Wasim**  
+Founder & AI Developer  
+📧 mohdwasim.tech@gmail.com
+
+---
+
+*Built with ❤️ using Google ADK, FastAPI, React, and Vite*

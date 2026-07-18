@@ -1,35 +1,43 @@
-# Copyright 2026 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# ─── CarePilot AI — Production Backend Dockerfile ────────────────────────────
+# Deployed to Railway / Google Cloud Run
+# Base: python:3.11-slim | Package manager: uv | Server: uvicorn
 
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-RUN pip install --no-cache-dir uv==0.8.13
+# ─── Environment ──────────────────────────────────────────────────────────────
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8080 \
+    # Prevents uv from creating virtual envs inside the container
+    UV_SYSTEM_PYTHON=1
 
-WORKDIR /code
+# ─── System dependencies ───────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY ./pyproject.toml ./README.md ./uv.lock* ./
+# ─── Install uv (fast Python package manager) ─────────────────────────────────
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY ./app ./app
+# ─── Working directory ────────────────────────────────────────────────────────
+WORKDIR /app
 
-RUN uv sync --frozen
+# ─── Dependencies (cached layer) ──────────────────────────────────────────────
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
-ARG COMMIT_SHA=""
-ENV COMMIT_SHA=${COMMIT_SHA}
+# ─── Application code ────────────────────────────────────────────────────────
+COPY app/ ./app/
+COPY agents-cli-manifest.yaml ./
 
-ARG AGENT_VERSION=0.0.0
-ENV AGENT_VERSION=${AGENT_VERSION}
-
+# ─── Expose port ──────────────────────────────────────────────────────────────
 EXPOSE 8080
 
-CMD ["uv", "run", "uvicorn", "app.fast_api_app:app", "--host", "0.0.0.0", "--port", "8080"]
+# ─── Health check ─────────────────────────────────────────────────────────────
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# ─── Start server ─────────────────────────────────────────────────────────────
+# Uses $PORT env var — Railway and Cloud Run both inject this automatically
+CMD ["sh", "-c", "uv run uvicorn app.fast_api_app:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]

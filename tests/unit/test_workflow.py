@@ -19,9 +19,9 @@ that the graph correctly routes queries to the faq_agent (shipping) or
 decline_node (unrelated), without making real API calls.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
+import pytest
 from google.adk.models.llm_response import LlmResponse
 from google.adk.runners import InMemoryRunner
 from google.genai import types
@@ -139,4 +139,6 @@ async def test_unrelated_query_routes_to_decline():
     # decline_node emits output with the polite decline message
     decline_events = [e for e in events if e.node_info.name == "decline_node"]
     assert decline_events, "Expected at least one event from decline_node"
-    assert "only answer questions related to shipping" in decline_events[0].output
+    decline_output = decline_events[0].output
+    assert decline_output is not None
+    assert "only answer questions related to shipping" in decline_output

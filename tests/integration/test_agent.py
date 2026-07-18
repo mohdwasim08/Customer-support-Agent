@@ -12,12 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+os.environ["INTEGRATION_TEST"] = "TRUE"
+
+from unittest.mock import patch
+
 from google.adk.agents.run_config import RunConfig, StreamingMode
+from google.adk.models.llm_response import LlmResponse
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from app.agent import root_agent
+
+
+async def mock_generate_content_async(self, llm_request, stream=False):
+    yield LlmResponse(
+        content=types.Content(
+            role="model",
+            parts=[types.Part.from_text(text='{"is_shipping_related": false}')],
+        )
+    )
 
 
 def test_agent_stream() -> None:
@@ -35,14 +51,18 @@ def test_agent_stream() -> None:
         role="user", parts=[types.Part.from_text(text="Why is the sky blue?")]
     )
 
-    events = list(
-        runner.run(
-            new_message=message,
-            user_id="test_user",
-            session_id=session.id,
-            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+    with patch(
+        "google.adk.models.google_llm.Gemini.generate_content_async",
+        new=mock_generate_content_async,
+    ):
+        events = list(
+            runner.run(
+                new_message=message,
+                user_id="test_user",
+                session_id=session.id,
+                run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+            )
         )
-    )
     assert len(events) > 0, "Expected at least one message"
 
     has_text_content = False
