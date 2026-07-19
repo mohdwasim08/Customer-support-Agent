@@ -72,6 +72,12 @@ app.title = "CarePilot AI"
 app.description = "API for interacting with the CarePilot AI Customer Care Agent"
 
 
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    """Health check endpoint for container healthchecks."""
+    return {"status": "healthy"}
+
+
 @app.post("/feedback")
 def collect_feedback(feedback: Feedback) -> dict[str, str]:
     """Collect and log feedback.
