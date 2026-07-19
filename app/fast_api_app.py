@@ -101,7 +101,7 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-frontend_dist = os.path.join(os.path.dirname(AGENT_DIR), "frontend", "dist")
+frontend_dist = os.path.join(AGENT_DIR, "frontend", "dist")
 if os.path.exists(frontend_dist):
     # Mount assets folder for static files
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
