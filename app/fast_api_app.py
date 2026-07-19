@@ -97,6 +97,33 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
     return {"status": "success"}
 
 
+# ─── Serve Frontend Static Files & SPA Routing ────────────────────────────────
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+frontend_dist = os.path.join(os.path.dirname(AGENT_DIR), "frontend", "dist")
+if os.path.exists(frontend_dist):
+    # Mount assets folder for static files
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    # Catch-all route to serve index.html and root static assets
+    @app.get("/{catchall:path}")
+    async def serve_frontend(catchall: str):
+        # Exclude API endpoints and dev UI
+        if catchall.startswith(("apps", "run_sse", "health", "feedback", "dev-ui", "list-apps", "version")):
+            return None
+
+        # Check if requested file exists in root of dist (e.g. favicon.svg, avatar-circle.jpg)
+        file_path = os.path.join(frontend_dist, catchall)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+
+        # Fallback to index.html for SPA routes (e.g. /chat, /tracking)
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+
+
 # Main execution
 if __name__ == "__main__":
     import uvicorn
